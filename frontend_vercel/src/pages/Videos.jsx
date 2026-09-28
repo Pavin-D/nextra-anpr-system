@@ -13,16 +13,9 @@ export default function Videos() {
     }, []);
 
     const fetchVideos = async () => {
-        setLoading(true);
-        try {
-            const res = await fetch('/api/v1/videos');
-            const data = await res.json();
-            setVideos(data.videos || []);
-        } catch (e) {
-            console.error('Error fetching videos', e);
-        }
-        setLoading(false);
-    };
+    setVideos(["CAM_01_morning_traffic.mp4", "CAM_02_highway_accident.mp4", "CAM_03_city_center.mp4"]);
+    setLoading(false);
+};
 
     const handleDeleteRequest = (filename) => {
         setDeleteModal({ show: true, filename });
@@ -194,3 +187,4 @@ export default function Videos() {
         </div>
     );
 }
+

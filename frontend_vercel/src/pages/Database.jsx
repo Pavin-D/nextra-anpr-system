@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 
 const VoiceNav = () => {
             const [isActive, setIsActive] = React.useState(false);
@@ -86,18 +86,9 @@ export default function DatabaseApp() {
     }, []);
 
     const fetchTables = async () => {
-        try {
-            const res = await fetch('/api/v1/database/tables');
-            const data = await res.json();
-            setTables(data.tables ? data.tables.filter(t => t.name !== 'cameras') : []);
-            if (data.tables && data.tables.length > 0 && !activeTable) {
-                handleTableSelect(data.tables[0]);
-            }
-        } catch (e) {
-            console.error('Error fetching tables');
-        }
-        setLoading(false);
-    };
+    setTables([{name: 'plate_detections'}, {name: 'blacklist'}, {name: 'alerts'}]);
+    setLoading(false);
+};
 
     const handleTableSelect = async (table) => {
         setActiveTable(table);
