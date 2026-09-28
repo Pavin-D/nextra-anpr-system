@@ -112,8 +112,13 @@ function ChatApp() {
         setIsTyping(true);
 
         try {
-            await new Promise(r => setTimeout(r, 800));
-            const data = { reply: "This is only the frontend dashboard hosted on Vercel. To run live AI queries, you need to connect to the active backend database and GPU server!" };
+            // bypass fetch {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ message: userMsg })
+            });
+            await new Promise(r => setTimeout(r, 600));
+            const data = { reply: 'This is only the frontend dashboard hosted on Vercel. To run live AI queries, you need to connect to the active backend database and GPU server!' };
             
             setIsTyping(false);
             setMessages([...newMessages, { role: 'bot', text: data.reply }]);
@@ -132,28 +137,7 @@ function ChatApp() {
         localStorage.setItem('nextra_chat_history', JSON.stringify(initial));
     }
 
-    const formatMessage = (text) => { return <p className="mb-3 text-sm leading-relaxed text-gray-800">{text}</p>; };
-        
-        lines.forEach((line, i) => {
-            const parts = line.split(/(\**.*?\**)/g).map((part, j) => {
-                if (part.startsWith('**') && part.endsWith('**')) {
-                    return <strong key={j}>{part.slice(2, -2)}</strong>;
-                }
-                return part;
-            });
-            
-            if (line.trim().startsWith('- ')) {
-                currentList.push(<li key={`li-${i}`} className="text-sm font-medium text-gray-700">{parts.slice(1)}</li>);
-            } else {
-                flushList();
-                if (line.trim() !== '') {
-                    elements.push(<p key={`p-${i}`} className="mb-3 text-sm leading-relaxed text-gray-800">{parts}</p>);
-                }
-            }
-        });
-        flushList();
-        return elements;
-    };
+    const formatMessage = (text) => { return text; };
 
     return (
         <div className="relative w-full h-[100dvh] sm:h-full overflow-hidden bg-gradient-to-br from-gray-50 to-gray-200 font-sans text-gray-900 flex flex-col pt-10 px-6 pb-6">
