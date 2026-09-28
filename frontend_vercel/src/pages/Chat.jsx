@@ -132,17 +132,7 @@ function ChatApp() {
         localStorage.setItem('nextra_chat_history', JSON.stringify(initial));
     }
 
-    const formatMessage = (text) => {
-        const lines = text.split('\n');
-        const elements = [];
-        let currentList = [];
-        
-        const flushList = () => {
-            if (currentList.length > 0) {
-                elements.push(<ul key={`ul-${elements.length}`} className="my-3 bg-gray-50 p-4 rounded-xl border border-gray-100 shadow-inner">{currentList}</ul>);
-                currentList = [];
-            }
-        };
+    const formatMessage = (text) => { return <p className="mb-3 text-sm leading-relaxed text-gray-800">{text}</p>; };
         
         lines.forEach((line, i) => {
             const parts = line.split(/(\**.*?\**)/g).map((part, j) => {
