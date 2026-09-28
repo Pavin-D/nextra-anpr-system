@@ -106,9 +106,9 @@ function TrackingApp() {
         }
         
         setKnownPlates([
-    { plate_number: 'KA02MN1828', last_seen: '2026-09-28 14:30', total_detections: 12 },
-    { plate_number: 'DL4CAB4421', last_seen: '2026-09-28 14:31', total_detections: 5 },
-    { plate_number: 'MH12RN4398', last_seen: '2026-09-28 14:32', total_detections: 2 }
+    { plate_number: 'KA02MN1828', total_detections: 12 },
+    { plate_number: 'DL4CAB4421', total_detections: 5 },
+    { plate_number: 'MH12RN4398', total_detections: 2 }
 ]);
     }, []);
 
