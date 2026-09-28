@@ -18,33 +18,7 @@
                 }, 800);
             };
 
-            const handleLogin = async (e) => {
-                e.preventDefault();
-                setError("");
-                setLoading(true);
-                try {
-                    const res = await fetch("/api/v1/auth/login", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ username, password })
-                    });
-                    const data = await res.json();
-                    
-                    if (data.token) {
-                        localStorage.setItem("nextra_token", data.token);
-                        localStorage.setItem("nextra_user", data.username);
-                        window.location.href = "/";
-                    } else {
-                        setError(data.error || "Authentication failed");
-                    }
-                                } catch (err) {
-                    // DEMO MODE BYPASS FOR VERCEL: If backend is offline, just log them in to show the UI!
-                    localStorage.setItem("nextra_token", "demo_token");
-                    localStorage.setItem("nextra_user", "Demo User");
-                    window.location.href = "/";
-                }
-                setLoading(false);
-            };
+            const handleLogin = async (e) => { e.preventDefault(); localStorage.setItem('nextra_token', 'demo_token'); localStorage.setItem('nextra_user', 'Admin'); window.location.href = '/'; };
 
             return (
                 <div className="w-screen h-screen flex items-center justify-center relative">
