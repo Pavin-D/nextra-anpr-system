@@ -13,7 +13,7 @@ export default function Videos() {
     }, []);
 
     const fetchVideos = async () => {
-    setVideos(["CAM_01_morning_traffic.mp4", "CAM_02_highway_accident.mp4", "CAM_03_city_center.mp4"]);
+    setVideos(['CAM_01_traffic_sample.mp4', 'CAM_02_traffic_sample1.mp4', 'CAM_03_traffic_sample.mp4']);
     setLoading(false);
 };
 
