@@ -37,8 +37,11 @@
                     } else {
                         setError(data.error || "Authentication failed");
                     }
-                } catch (err) {
-                    setError("Network error. Please try again.");
+                                } catch (err) {
+                    // DEMO MODE BYPASS FOR VERCEL: If backend is offline, just log them in to show the UI!
+                    localStorage.setItem("nextra_token", "demo_token");
+                    localStorage.setItem("nextra_user", "Demo User");
+                    window.location.href = "/";
                 }
                 setLoading(false);
             };
@@ -135,4 +138,5 @@
         
         
     
+
 
