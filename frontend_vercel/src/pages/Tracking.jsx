@@ -105,10 +105,11 @@ function TrackingApp() {
             L.marker([28.6129, 77.2295], {icon: camIcon}).addTo(mapInstance.current).bindPopup('<b>CAM_03</b><br>India Gate Roundabout');
         }
         
-        fetch('/api/v1/plates')
-            .then(r => r.json())
-            .then(data => setKnownPlates(data.plates || []))
-            .catch(e => console.error("Error fetching plates", e));
+        setKnownPlates([
+    { plate_number: 'KA02MN1828', total_detections: 12 },
+    { plate_number: 'DL4CAB4421', total_detections: 5 },
+    { plate_number: 'MH12RN4398', total_detections: 2 }
+]);
     }, []);
 
     const searchTrajectory = async (plateOverride) => {
@@ -120,7 +121,7 @@ function TrackingApp() {
         setIsSearching(true);
         try {
             const res = await fetch(`/api/v1/trajectory/${plate.toUpperCase()}`);
-            const data = await res.json();
+            
             if (!data.trajectory || data.trajectory.length === 0) {
                 setStatus(`No detections found for ${plate}`);
                 setIsSearching(false);
