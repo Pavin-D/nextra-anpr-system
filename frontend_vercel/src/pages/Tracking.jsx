@@ -105,7 +105,7 @@ function TrackingApp() {
             L.marker([28.6129, 77.2295], {icon: camIcon}).addTo(mapInstance.current).bindPopup('<b>CAM_03</b><br>India Gate Roundabout');
         }
         
-        setPlates([{ plate_number: 'KA02MN1828', last_seen: '2026-09-28 14:30', total_detections: 12 }, { plate_number: 'DL4CAB4421', last_seen: '2026-09-28 14:31', total_detections: 5 }]); setFilteredPlates([{ plate_number: 'KA02MN1828', last_seen: '2026-09-28 14:30', total_detections: 12 }, { plate_number: 'DL4CAB4421', last_seen: '2026-09-28 14:31', total_detections: 5 }]); setLoading(false); return;
+        fetch('/api/v1/plates')
             .then(r => r.json())
             .then(data => setKnownPlates(data.plates || []))
             .catch(e => console.error("Error fetching plates", e));
