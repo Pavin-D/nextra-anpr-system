@@ -207,7 +207,7 @@ const data = { detections: cameraArray.length > 0 ? allMock.filter(m => cameraAr
         trajectoryLayer.current.clearLayers();
         try {
             const res = await fetch(`/api/v1/trajectory/${plate}`);
-            const data = await res.json();
+            const data = { trajectory: [{ location_name: 'CAM_01 (Connaught Place)', timestamp: '2026-09-28 14:30:00', lat: 28.6315, long: 77.2167 }, { location_name: 'CAM_02 (Mandi House)', timestamp: '2026-09-28 14:35:00', lat: 28.6258, long: 77.2343 }, { location_name: 'CAM_03 (India Gate)', timestamp: '2026-09-28 14:40:00', lat: 28.6129, long: 77.2295 }] };
             if (!data.trajectory || data.trajectory.length === 0) {
                 setStatus(`No mapping data for ${plate}`);
                 return;
