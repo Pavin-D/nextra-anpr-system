@@ -112,12 +112,8 @@ function ChatApp() {
         setIsTyping(true);
 
         try {
-            const res = await fetch('/api/v1/chat', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ message: userMsg })
-            });
-            const data = await res.json();
+            await new Promise(r => setTimeout(r, 800));
+            const data = { reply: "This is only the frontend dashboard hosted on Vercel. To run live AI queries, you need to connect to the active backend database and GPU server!" };
             
             setIsTyping(false);
             setMessages([...newMessages, { role: 'bot', text: data.reply }]);
