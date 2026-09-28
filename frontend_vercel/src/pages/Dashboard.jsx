@@ -168,7 +168,7 @@ function Dashboard() {
                 const res = await fetch('/api/v1/progress');
                 const data = await res.json();
                 setAiProgress(data.progress);
-                setLiveImgUrl('/api/v1/live-frame?t=' + Date.now());
+                setLiveImgUrl('https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=800&q=80');
             } catch (e) {}
         };
 
@@ -427,4 +427,5 @@ class ErrorBoundary extends React.Component {
 
 
 export default Dashboard;
+
 
