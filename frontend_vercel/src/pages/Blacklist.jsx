@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 
 const VoiceNav = () => {
             const [isActive, setIsActive] = React.useState(false);
@@ -272,3 +272,4 @@ class ErrorBoundary extends React.Component {
 
 
 export default BlacklistApp;
+

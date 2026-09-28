@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 
 const VoiceNav = () => {
             const [isActive, setIsActive] = React.useState(false);
@@ -84,82 +84,18 @@ function TrackingApp() {
     const trajectoryLayer = React.useRef(null);
 
     React.useEffect(() => {
-        if (!mapInstance.current && mapRef.current) {
-            mapInstance.current = L.map(mapRef.current, { zoomControl: false }).setView([28.6200, 77.2260], 14);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; OpenStreetMap contributors'
-            }).addTo(mapInstance.current);
-            
-            L.control.zoom({ position: 'bottomright' }).addTo(mapInstance.current);
-            trajectoryLayer.current = L.layerGroup().addTo(mapInstance.current);
-            setTimeout(() => { if (mapInstance.current) mapInstance.current.invalidateSize(); }, 500);
-            
-            const camIcon = L.icon({
-                iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-                shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-                iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34]
-            });
-            
-            L.marker([28.6315, 77.2167], {icon: camIcon}).addTo(mapInstance.current).bindPopup('<b>CAM_01</b><br>Connaught Place North');
-            L.marker([28.6258, 77.2343], {icon: camIcon}).addTo(mapInstance.current).bindPopup('<b>CAM_02</b><br>Mandi House Circle');
-            L.marker([28.6129, 77.2295], {icon: camIcon}).addTo(mapInstance.current).bindPopup('<b>CAM_03</b><br>India Gate Roundabout');
-        }
-        
-        fetch('/api/v1/plates')
-            .then(r => r.json())
-            .then(data => setKnownPlates(data.plates || []))
-            .catch(e => console.error("Error fetching plates", e));
-    }, []);
-
-    const searchTrajectory = async (plateOverride) => {
-        const plate = typeof plateOverride === 'string' ? plateOverride : plateSearch;
-        if (!plate) return;
-        setPlateSearch(plate.toUpperCase());
-        trajectoryLayer.current.clearLayers();
-        setStatus("Tracing optimal path...");
-        setIsSearching(true);
-        try {
-            const res = await fetch(`/api/v1/trajectory/${plate.toUpperCase()}`);
-            const data = await res.json();
-            if (!data.trajectory || data.trajectory.length === 0) {
-                setStatus(`No detections found for ${plate}`);
-                setIsSearching(false);
-                return;
-            }
-            const latlngs = data.trajectory.map(p => [p.lat, p.long]);
-            
-            if (latlngs.length > 1) {
-                try {
-                    const coords = data.trajectory.map(p => `${p.long},${p.lat}`).join(';');
-                    const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson&alternatives=true`;
-                    const osrmRes = await fetch(osrmUrl);
-                    const osrmData = await osrmRes.json();
-                    
-                    if (osrmData.routes && osrmData.routes.length > 0) {
-                        for (let i = osrmData.routes.length - 1; i >= 0; i--) {
-                            const isOptimal = (i === 0);
-                            L.geoJSON(osrmData.routes[i].geometry, {
-                                style: { 
-                                    color: isOptimal ? '#4f46e5' : '#94a3b8', 
-                                    weight: isOptimal ? 6 : 4, 
-                                    opacity: isOptimal ? 0.9 : 0.6,
-                                    dashArray: isOptimal ? '' : '8, 8'
-                                }
-                            }).addTo(trajectoryLayer.current);
-                        }
-                    } else {
-                        L.polyline(latlngs, {color: '#4f46e5', weight: 6, dashArray: '10, 15'}).addTo(trajectoryLayer.current);
-                    }
-                } catch (err) {
-                    L.polyline(latlngs, {color: '#4f46e5', weight: 6, dashArray: '10, 15'}).addTo(trajectoryLayer.current);
-                }
-            }
-
-            data.trajectory.forEach((p, index) => {
-                L.circleMarker([p.lat, p.long], {color: '#ec4899', fillColor: '#ec4899', radius: 8, fillOpacity: 1})
-                 .bindPopup(`<b>${p.location_name || 'Node'}</b><br/>Time: ${new Date(p.timestamp).toLocaleTimeString()}`)
-                 .addTo(trajectoryLayer.current).openPopup();
-            });
+    setPlates([
+        { plate_number: 'KA02MN1828', last_seen: '2026-09-28 14:30', total_detections: 12 },
+        { plate_number: 'DL4CAB4421', last_seen: '2026-09-28 14:31', total_detections: 5 },
+        { plate_number: 'MH12RN4398', last_seen: '2026-09-28 14:32', total_detections: 2 }
+    ]);
+    setFilteredPlates([
+        { plate_number: 'KA02MN1828', last_seen: '2026-09-28 14:30', total_detections: 12 },
+        { plate_number: 'DL4CAB4421', last_seen: '2026-09-28 14:31', total_detections: 5 },
+        { plate_number: 'MH12RN4398', last_seen: '2026-09-28 14:32', total_detections: 2 }
+    ]);
+    setLoading(false);
+}, []);
             mapInstance.current.fitBounds(trajectoryLayer.current.getBounds(), {padding: [100, 100]});
             setStatus(`Successfully mapped ${latlngs.length} nodes.`);
         } catch (e) { 
@@ -275,3 +211,4 @@ class ErrorBoundary extends React.Component {
 
 
 export default TrackingApp;
+
