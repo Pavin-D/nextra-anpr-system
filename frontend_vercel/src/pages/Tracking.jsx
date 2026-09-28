@@ -105,11 +105,7 @@ function TrackingApp() {
             L.marker([28.6129, 77.2295], {icon: camIcon}).addTo(mapInstance.current).bindPopup('<b>CAM_03</b><br>India Gate Roundabout');
         }
         
-        setKnownPlates([
-    { plate_number: 'KA02MN1828', total_detections: 12 },
-    { plate_number: 'DL4CAB4421', total_detections: 5 },
-    { plate_number: 'MH12RN4398', total_detections: 2 }
-]);
+        setKnownPlates(['KA02MN1828', 'DL4CAB4421', 'MH12RN4398']);
     }, []);
 
     const searchTrajectory = async (plateOverride) => {
