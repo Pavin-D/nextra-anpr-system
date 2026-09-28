@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 const VoiceNav = () => {
             const [isActive, setIsActive] = React.useState(false);
@@ -84,15 +84,7 @@ function BlacklistApp() {
         fetchBlacklist();
     }, []);
 
-    const fetchBlacklist = async () => {
-        try {
-            const res = await fetch('/api/v1/blacklist');
-            const data = await res.json();
-            setBlacklist(data.blacklist || []);
-        } catch (e) {
-            console.error("Error fetching blacklist", e);
-        }
-    };
+    const fetchBlacklist = async () => { setBlacklist([{ plate_number: 'KA02MN1828', reason: 'Stolen Vehicle', added_date: '2026-09-20' }, { plate_number: 'DL8CX1234', reason: 'Amber Alert', added_date: '2026-09-25' }, { plate_number: 'TN01XY9999', reason: 'Wanted Suspect', added_date: '2026-09-27' }]); setLoading(false); };
 
     const handleAdd = async (e) => {
         e.preventDefault();
@@ -272,4 +264,3 @@ class ErrorBoundary extends React.Component {
 
 
 export default BlacklistApp;
-

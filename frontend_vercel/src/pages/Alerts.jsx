@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 const VoiceNav = () => {
             const [isActive, setIsActive] = React.useState(false);
@@ -93,14 +93,24 @@ export default function AlertsApp() {
         }
     }, [alerts]);
 
-    const fetchAlerts = async () => {
-    setAlerts([
-        { id: 101, plate_number: 'KA02MN1828', alert_type: 'Stolen Vehicle', timestamp: '2026-09-28 14:30:00', camera_id: 'CAM_01', resolved: false },
-        { id: 102, plate_number: 'DL8CX1234', alert_type: 'Amber Alert', timestamp: '2026-09-28 10:15:00', camera_id: 'CAM_02', resolved: true },
-        { id: 103, plate_number: 'MH12RN4398', alert_type: 'Speeding', timestamp: '2026-09-27 18:45:00', camera_id: 'CAM_01', resolved: false }
-    ]);
-    setLoading(false);
-};
+    const fetchAlerts = async () => { setAlerts([{ id: 101, plate_number: 'KA02MN1828', alert_type: 'Stolen Vehicle', timestamp: '2026-09-28 14:30:00', camera_id: 'CAM_01', resolved: false }, { id: 102, plate_number: 'DL8CX1234', alert_type: 'Amber Alert', timestamp: '2026-09-28 10:15:00', camera_id: 'CAM_02', resolved: true }, { id: 103, plate_number: 'MH12RN4398', alert_type: 'Speeding', timestamp: '2026-09-27 18:45:00', camera_id: 'CAM_01', resolved: false }]); setLoading(false); };
+
+    React.useEffect(() => {
+        fetchAlerts();
+        const interval = setInterval(fetchAlerts, 5000);
+        return () => clearInterval(interval);
+    }, []);
+
+    const handleDelete = async (id) => {
+        if(!confirm("Clear this threat alert permanently?")) return;
+        try {
+            await fetch(`/api/v1/alerts/${id}`, { method: 'DELETE' });
+            fetchAlerts();
+            if(selectedAlert && selectedAlert.id === id) setSelectedAlert(null);
+        } catch(e) {
+            console.error("Error deleting alert.");
+        }
+    };
 
     const getBadgeColor = (type) => {
         const t = (type || '').toLowerCase();
@@ -310,7 +320,6 @@ export default function AlertsApp() {
         </div>
     );
 }
-
 
 
 

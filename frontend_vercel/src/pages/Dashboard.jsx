@@ -142,26 +142,7 @@ function Dashboard() {
             L.marker([28.6129, 77.2295], {icon: camIcon}).addTo(mapInstance.current).bindPopup('<b>CAM_03</b><br>India Gate Roundabout');
         }
 
-        const fetchTelemetry = async () => {
-    try {
-        setTelemetry({
-            success_rate: 98.5,
-            cameras: [{id: 'CAM_01', status: 'active'}, {id: 'CAM_02', status: 'active'}, {id: 'CAM_03', status: 'active'}]
-        });
-        setAlerts([
-            { id: 101, plate: "KA02MN1828", type: "Stolen Vehicle", time: "Just now" },
-            { id: 102, plate: "DL4CAB4421", type: "Speeding", time: "2m ago" }
-        ]);
-
-        if (heatLayer.current) mapInstance.current.removeLayer(heatLayer.current);
-        const heatPoints = [
-            [28.6315, 77.2167, 1200],
-            [28.6258, 77.2343, 800],
-            [28.6129, 77.2295, 300]
-        ];
-        heatLayer.current = L.heatLayer(heatPoints, {radius: 40, blur: 20}).addTo(mapInstance.current);
-    } catch(e) { console.error(e); }
-};
+        const fetchTelemetry = async () => { setTelemetry({ success_rate: 98.5, cameras: [{id: 'CAM_01', status: 'active'}, {id: 'CAM_02', status: 'active'}, {id: 'CAM_03', status: 'active'}] }); setAlerts([ { id: 101, plate: "KA02MN1828", type: "Stolen Vehicle", time: "Just now" }, { id: 102, plate: "DL4CAB4421", type: "Speeding", time: "2m ago" } ]); if (heatLayer.current) mapInstance.current.removeLayer(heatLayer.current); const heatPoints = [ [28.6315, 77.2167, 1200], [28.6258, 77.2343, 800], [28.6129, 77.2295, 300] ]; heatLayer.current = L.heatLayer(heatPoints, {radius: 40, blur: 20}).addTo(mapInstance.current); };
 
         const fetchLiveProgress = async () => {
             try {
@@ -427,7 +408,4 @@ class ErrorBoundary extends React.Component {
 
 
 export default Dashboard;
-
-
-
 
