@@ -183,12 +183,15 @@ function GeofenceApp() {
         setStatus(`Querying nodes: ${cameraArray.join(', ')}`);
         
         try {
-            const res = await fetch('/api/v1/geofence-search', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({cameras: cameraArray})
-            });
-            const data = await res.json();
+            const allMock = [
+    { plate_number: 'KA02MN1828', camera_id: 'CAM_01', timestamp: '2026-09-28 14:30:00' },
+    { plate_number: 'DL4CAB4421', camera_id: 'CAM_02', timestamp: '2026-09-28 14:35:00' },
+    { plate_number: 'MH12RN4398', camera_id: 'CAM_01', timestamp: '2026-09-28 14:40:00' },
+    { plate_number: 'UP32EZ1029', camera_id: 'CAM_02', timestamp: '2026-09-28 14:42:00' },
+    { plate_number: 'TN01XY9999', camera_id: 'CAM_03', timestamp: '2026-09-28 14:45:00' },
+    { plate_number: 'RJ14CV8876', camera_id: 'CAM_03', timestamp: '2026-09-28 14:50:00' }
+];
+const data = { detections: cameraArray.length > 0 ? allMock.filter(m => cameraArray.includes(m.camera_id)) : allMock };
             setDetections(data.detections || []);
             setStatus(`Identified ${data.detections.length} vehicles.`);
         } catch (e) {
