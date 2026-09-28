@@ -13,7 +13,7 @@ export default function Videos() {
     }, []);
 
     const fetchVideos = async () => {
-    setVideos(['CAM_01_traffic_sample.mp4', 'CAM_02_traffic_sample1.mp4', 'CAM_03_traffic_sample.mp4']);
+    setVideos([{ filename: 'CAM_01_traffic_sample.mp4', size: '8 MB', date: '2026-09-28T14:30:00Z' }, { filename: 'CAM_02_traffic_sample1.mp4', size: '12 MB', date: '2026-09-28T14:35:00Z' }, { filename: 'CAM_03_traffic_sample.mp4', size: '8 MB', date: '2026-09-28T14:40:00Z' }]);
     setLoading(false);
 };
 
