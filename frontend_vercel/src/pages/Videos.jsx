@@ -154,7 +154,7 @@ export default function Videos() {
                                 {activeVideos.map(vid => (
                                     <div key={vid} className="relative w-full h-full bg-black rounded-xl overflow-hidden border border-gray-700 shadow-2xl flex items-center justify-center group">
                                         <video controls autoPlay loop className="w-full h-full object-contain">
-                                            <source src={`/videos/`} type="video/mp4" />
+                                            <source src={`/videos/${vid}`} type="video/mp4" />
                                         </video>
                                         <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-lg shadow-lg text-[10px] text-white font-mono font-bold flex items-center tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
                                             <svg className="w-3 h-3 text-red-500 mr-2 animate-pulse" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle></svg>
