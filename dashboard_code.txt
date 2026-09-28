@@ -1,0 +1,276 @@
+function Dashboard() {
+            const [plateSearch, setPlateSearch] = React.useState('');
+            const [status, setStatus] = React.useState('');
+            const [alerts, setAlerts] = React.useState([]);
+            // TOAST LOGIC
+            const [toastAlert, setToastAlert] = React.useState(null);
+            const seenAlerts = React.useRef(new Set());
+            
+            React.useEffect(() => {
+                if (alerts && alerts.length > 0) {
+                    const latest = alerts[0];
+                    if (!seenAlerts.current.has(latest.id)) {
+                        // Only show toast if it's a new alert after initial load
+                        if (seenAlerts.current.size > 0) {
+                            setToastAlert(latest);
+                            setTimeout(() => setToastAlert(null), 8000);
+                        }
+                        alerts.forEach(a => seenAlerts.current.add(a.id));
+                    }
+                }
+            }, [alerts]);
+
+            const [telemetry, setTelemetry] = React.useState({success_rate: 0, cameras: []});
+            const [bottlenecks, setBottlenecks] = React.useState([]);
+            
+            // Live AI Preview states
+            const [showLivePreview, setShowLivePreview] = React.useState(false);
+            const [aiProgress, setAiProgress] = React.useState(0);
+            const [liveImgUrl, setLiveImgUrl] = React.useState('');
+            
+            const [colabUrl, setColabUrl] = React.useState('');
+            
+            const [showSidebar, setShowSidebar] = React.useState(true);
+            const mapRef = React.useRef(null);
+            const mapInstance = React.useRef(null);
+            const trajectoryLayer = React.useRef(null);
+            const heatLayer = React.useRef(null);
+            const [files, setFiles] = React.useState({cam1: null, cam2: null, cam3: null});
+
+            React.useEffect(() => {
+                if (!mapInstance.current) {
+                    mapInstance.current = L.map(mapRef.current).setView([28.6200, 77.2260], 14);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '&copy; OpenStreetMap contributors'
+                    }).addTo(mapInstance.current);
+                    
+                    trajectoryLayer.current = L.layerGroup().addTo(mapInstance.current);
+                    
+                    // Fix 3 predefined camera nodes on the map permanently
+                    const camIcon = L.icon({
+                        iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+                        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+                        iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34]
+                    });
+                    
+                    L.marker([28.6315, 77.2167], {icon: camIcon}).addTo(mapInstance.current).bindPopup('<b>CAM_01</b><br>Connaught Place North');
+                    L.marker([28.6258, 77.2343], {icon: camIcon}).addTo(mapInstance.current).bindPopup('<b>CAM_02</b><br>Mandi House Circle');
+                    L.marker([28.6129, 77.2295], {icon: camIcon}).addTo(mapInstance.current).bindPopup('<b>CAM_03</b><br>India Gate Roundabout');
+                }
+                refreshData();
+                const interval = setInterval(refreshData, 5000);
+                
+                // Live preview poll
+                const liveInterval = setInterval(async () => {
+                    try {
+                        const progRes = await fetch('/api/v1/progress');
+                        const progData = await progRes.json();
+                        setAiProgress(progData.progress);
+                        setLiveImgUrl(`/api/v1/live-frame?t=${new Date().getTime()}`);
+                    } catch (e) {}
+                }, 1000);
+                
+                return () => { clearInterval(interval); clearInterval(liveInterval); };
+            }, []);
+
+            const refreshData = async () => {
+                try {
+                    const heatRes = await fetch('/api/v1/analytics/heatmap');
+                    const heatData = await heatRes.json();
+                    if (heatLayer.current) mapInstance.current.removeLayer(heatLayer.current);
+                    
+                    const heatPoints = heatData.heatmap.map(c => [c.lat, c.long, c.detection_count * 10]);
+                    heatLayer.current = L.heatLayer(heatPoints, {radius: 40, blur: 20}).addTo(mapInstance.current);
+                    
+                    const alertRes = await fetch('/api/v1/alerts');
+                    setAlerts((await alertRes.json()).alerts);
+                    
+                    const telRes = await fetch('/api/v1/telemetry');
+                    setTelemetry(await telRes.json());
+                    
+                    const speedRes = await fetch('/api/v1/analytics/speeds');
+                    setBottlenecks((await speedRes.json()).bottlenecks);
+                } catch (e) { console.error("Data refresh failed", e); }
+            };
+
+            const searchTrajectory = async () => {
+                if (!plateSearch) return;
+                trajectoryLayer.current.clearLayers();
+                try {
+                    const res = await fetch(`/api/v1/trajectory/${plateSearch.toUpperCase()}`);
+                    const data = await res.json();
+                    if (data.trajectory.length === 0) {
+                        setStatus(`No detections found for ${plateSearch}`);
+                        return;
+                    }
+                    const latlngs = data.trajectory.map(p => [p.lat, p.long]);
+                    L.polyline(latlngs, {color: 'cyan', weight: 4}).addTo(trajectoryLayer.current);
+                    data.trajectory.forEach((p, index) => {
+                        L.circleMarker([p.lat, p.long], {color: 'cyan', radius: 8})
+                         .bindPopup(`<b>${p.location_name}</b><br/>Time: ${new Date(p.timestamp).toLocaleTimeString()}`)
+                         .addTo(trajectoryLayer.current).openPopup();
+                    });
+                    mapInstance.current.fitBounds(latlngs, {padding: [50, 50]});
+                    setStatus(`Trajectory loaded.`);
+                    setShowSidebar(false); // Auto-hide sidebar to view map
+                } catch (e) { setStatus("Error loading trajectory."); }
+            };
+
+            const handleUpload = async () => {
+                setStatus("Uploading feeds to multi-pipeline...");
+                setShowLivePreview(true);
+                setShowSidebar(false); // Auto-hide sidebar to view processing
+                const formData = new FormData();
+                if(files.cam1) formData.append("cam1", files.cam1);
+                if(files.cam2) formData.append("cam2", files.cam2);
+                if(files.cam3) formData.append("cam3", files.cam3);
+                
+                try {
+                    const res = await fetch('/api/v1/upload-feeds', { method: 'POST', body: formData });
+                    setStatus(`SUCCESS: ${(await res.json()).message}`);
+                } catch(e) { setStatus("Upload failed."); }
+            };
+
+        return (
+                <div className="flex flex-col h-screen overflow-hidden bg-gray-50 text-gray-900 font-sans">
+                    
+                    {/* TOP NAVIGATION BAR */}
+                    <div className="h-16 bg-white border-b border-gray-200 flex items-center px-6 justify-between z-[1000] shadow-sm flex-shrink-0">
+                        <div className="flex items-center space-x-4">
+                            <button onClick={() => setShowSidebar(!showSidebar)} className="text-gray-500 hover:text-indigo-600 transition-colors p-2 rounded-full hover:bg-indigo-50">
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                            </button>
+                            <h1 className="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-blue-500 tracking-tight">NEXTRA</h1>
+                            <VoiceNav />
+                        </div>
+                        <div className="hidden md:flex space-x-1 border border-gray-200 rounded-lg p-1 bg-gray-50">
+                            <a href="/" className="px-4 py-1.5 text-sm font-bold rounded-md bg-white text-indigo-700 shadow-sm border border-gray-200">Dashboard Overview</a>
+                            <a href="/tracking" className="px-4 py-1.5 text-sm font-semibold rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-200 transition-colors">Vehicle Tracking</a>
+                            <a href="/blacklist" className="px-4 py-1.5 text-sm font-semibold rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-200 transition-colors">Blacklist Manager</a>
+                            <a href="/geofence" className="px-4 py-1.5 text-sm font-semibold rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-200 transition-colors">Geofence Analytics</a>
+                            <a href="/chat" className="px-4 py-1.5 text-sm font-semibold rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-200 transition-colors">AI Chat Search</a>
+                            <a href="/alerts" className="px-4 py-1.5 text-sm font-semibold rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-200 transition-colors">Threat Alerts</a>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-1 overflow-hidden relative">
+                    {/* TOAST NOTIFICATION */}
+                    {toastAlert && (
+                        <div className="absolute top-20 left-1/2 transform -translate-x-1/2 z-[9999] bg-white rounded-2xl shadow-[0_20px_50px_rgba(244,63,94,0.3)] border-2 border-rose-500 overflow-hidden flex animate-bounce flex-col w-[450px]">
+                            <div className="bg-rose-500 text-white px-4 py-2 font-black tracking-widest text-sm flex items-center justify-between">
+                                <div className="flex items-center">
+                                    <span className="w-2.5 h-2.5 bg-white rounded-full animate-ping mr-3"></span>
+                                    THREAT DETECTED
+                                </div>
+                                <button onClick={() => setToastAlert(null)} className="text-white/80 hover:text-white">&times;</button>
+                            </div>
+                            <div className="p-5 flex">
+                                <div className="mr-4 text-rose-500">
+                                    <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                </div>
+                                <div>
+                                    <div className="text-xl font-black text-gray-900 font-mono tracking-wider mb-1">{toastAlert.plate_number}</div>
+                                    <div className="text-sm font-bold text-rose-600 mb-2 uppercase tracking-wide">{toastAlert.alert_type}</div>
+                                    <div className="text-xs text-gray-600 mb-2">{toastAlert.description}</div>
+                                    <div className="inline-block bg-gray-100 text-gray-700 text-xs font-bold px-2 py-1 rounded">📍 {toastAlert.camera_id} @ {new Date(toastAlert.timestamp).toLocaleTimeString()}</div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    
+                    {/* LIVE AI PREVIEW MODAL */}
+                    {showLivePreview && (
+                        <div className="absolute top-6 right-6 w-96 bg-white border border-gray-200 rounded-2xl shadow-2xl overflow-hidden z-[999] ring-1 ring-black ring-opacity-5">
+                            <div className="bg-gradient-to-r from-indigo-600 to-blue-500 px-5 py-3 flex justify-between items-center">
+                                <h3 className="font-bold text-sm text-white tracking-wide">LIVE AI ENGINE</h3>
+                                <button onClick={() => setShowLivePreview(false)} className="text-white/80 hover:text-white font-bold text-lg leading-none">&times;</button>
+                            </div>
+                            <div className="p-3 relative bg-gray-50">
+                                <img src={liveImgUrl} alt="AI Stream" className="w-full h-auto rounded-lg shadow-inner min-h-[200px] object-cover bg-gray-200" onError={(e) => e.target.src=''} />
+                                <div className="absolute top-5 left-5 bg-black/60 backdrop-blur-sm px-2 py-1 rounded shadow text-xs text-emerald-400 font-mono flex items-center">
+                                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse mr-2"></span>[YOLOv11] Tracking...
+                                </div>
+                            </div>
+                            <div className="p-5 bg-white border-t border-gray-100">
+                                <div className="flex justify-between text-xs font-semibold text-gray-600 mb-2">
+                                    <span>Processing Video Feeds...</span>
+                                    <span className="text-indigo-600">{aiProgress}%</span>
+                                </div>
+                                <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                                    <div className="bg-gradient-to-r from-indigo-500 to-blue-500 h-2.5 rounded-full transition-all duration-300 ease-out" style={{width: `${aiProgress}%`}}></div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    
+                    {/* Sidebar / Controls */}
+                    <div className={`absolute top-0 left-0 h-full w-[400px] max-w-[90vw] bg-white/95 backdrop-blur-xl p-6 pt-8 flex flex-col shadow-[10px_0_30px_rgba(0,0,0,0.05)] z-[900] overflow-y-auto transform transition-transform duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] border-r border-gray-100 ${showSidebar ? 'translate-x-0' : '-translate-x-full'}`}>
+                        <div className="mb-8">
+                            <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight mb-1">Analytics</h2>
+                            <p className="text-sm text-gray-500 font-medium">Multi-Camera Trajectory & Vision</p>
+                        </div>
+                        
+                        {/* TELEMETRY */}
+                        <div className="mb-8 flex-shrink-0">
+                            <h2 className="text-xs font-bold text-gray-400 mb-3 uppercase tracking-wider">System Telemetry</h2>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-center">
+                                    <div className="text-gray-500 text-xs font-semibold mb-1">OCR Success</div>
+                                    <div className="text-2xl text-indigo-600 font-black">{telemetry?.success_rate || 0}%</div>
+                                </div>
+                                <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 shadow-sm">
+                                    <div className="text-gray-500 text-xs font-semibold mb-2">Node Status</div>
+                                    {(!telemetry || !telemetry.cameras || telemetry.cameras.length === 0) ? <span className="text-sm text-gray-400">Offline</span> : telemetry.cameras.map(c => (
+                                        <div key={c.camera_id} className="flex items-center mt-1 text-sm font-medium text-gray-700">
+                                            <div className={`w-2.5 h-2.5 rounded-full mr-2 shadow-sm ${c.status === 'online' ? 'bg-emerald-500' : 'bg-rose-500'}`}></div>
+                                            {c.camera_id}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* VEHICLE TRACKING (MOVED) */}
+                        <div className="mb-8 flex-shrink-0">
+                            <a href="/tracking" className="flex items-center justify-center w-full bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 text-indigo-700 border border-indigo-200 py-3.5 rounded-xl text-sm font-bold shadow-sm transition-all">
+                                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 20l-5.447-2.724a1 1 0 01-.553-.894V4.152a1 1 0 011.447-.894L9 5.5l5.447-2.724a1 1 0 01.553.894v12.227a1 1 0 01-.447.894L15 20m0 0l-5.447-2.724a1 1 0 00-.894 0L3.5 20"></path></svg>
+                                Open Detailed Tracking Map
+                            </a>
+                        </div>
+
+                        {/* ACTIONS (Upload) */}
+                        <div className="flex-shrink-0 pb-10">
+                            <h2 className="text-xs font-bold text-gray-400 mb-3 uppercase tracking-wider">Video Ingestion</h2>
+                            <div className="space-y-3 mb-5">
+                                <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
+                                    <label className="block text-xs font-bold text-gray-600 mb-1.5">CAM_01 Source</label>
+                                    <input type="file" className="text-sm text-gray-600 w-full file:mr-3 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer" onChange={e => setFiles({...files, cam1: e.target.files[0]})} />
+                                </div>
+                                <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
+                                    <label className="block text-xs font-bold text-gray-600 mb-1.5">CAM_02 Source</label>
+                                    <input type="file" className="text-sm text-gray-600 w-full file:mr-3 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer" onChange={e => setFiles({...files, cam2: e.target.files[0]})} />
+                                </div>
+                                <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
+                                    <label className="block text-xs font-bold text-gray-600 mb-1.5">CAM_03 Source</label>
+                                    <input type="file" className="text-sm text-gray-600 w-full file:mr-3 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer" onChange={e => setFiles({...files, cam3: e.target.files[0]})} />
+                                </div>
+                            </div>
+                            <button onClick={handleUpload} className="w-full bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white py-3.5 rounded-xl text-sm font-bold shadow-md shadow-indigo-500/30 transition-all transform hover:-translate-y-0.5 flex justify-center items-center">
+                                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                                Ingest Video Feeds
+                            </button>
+                            {status && <p className="text-sm text-center font-medium text-indigo-600 mt-4 bg-indigo-50 py-2 rounded-lg">{status}</p>}
+                        </div>
+                    </div>
+                    
+                    {/* Map Display */}
+                    <div className="flex-1 bg-gray-100 relative h-full w-full" id="map-container">
+                        <div ref={mapRef} style={{height: '100%', width: '100%', position: 'absolute', top: 0, left: 0, zIndex: 0}}></div>
+                    </div>
+                    </div>
+                </div>
+            );
+        }
+
+        

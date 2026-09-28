@@ -1,0 +1,35 @@
+﻿# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# Node.js / React (Frontend)
+frontend/node_modules/
+frontend/dist/
+frontend/.npm/
+npm-debug.log*
+
+# AI Models (Do not push heavy weights)
+*.pt
+*.onnx
+weights/
+
+# Data & Media (Do not push large videos or live frame captures)
+data/
+*.mp4
+*.avi
+*.jpg
+*.jpeg
+*.png
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+
+# Missed Heavy Files
+*.zip
+*.safetensors
+anpr_project/venv/
+anpr_project/PaddleOCR/

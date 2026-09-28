@@ -1,0 +1,67 @@
+======================================================
+NEXTRA ANPR PLATFORM - LAPTOP SETUP & DEPLOYMENT GUIDE
+======================================================
+
+Follow these exact steps to set up the NEXTRA City-Wide ANPR project on a brand new Windows laptop.
+
+------------------------------------------------------
+PREREQUISITES (INSTALL THESE FIRST)
+------------------------------------------------------
+1. Python (3.10 or higher) - Make sure to check "Add Python to PATH" during installation.
+2. Node.js (LTS version) - Required for the React frontend.
+3. PostgreSQL - The database engine. 
+
+------------------------------------------------------
+STEP 1: DATABASE SETUP (POSTGRESQL)
+------------------------------------------------------
+1. Install PostgreSQL and set the superuser password to: root
+   (Note: If you use a different password, you must update the credentials in pipeline.py and main.py)
+2. Open pgAdmin (installed with PostgreSQL) or the SQL Shell (psql).
+3. Create a new database named exactly: ocr_db
+4. The Python backend will connect using:
+   User: postgres
+   Password: root
+   Host: localhost
+   Database: ocr_db
+
+------------------------------------------------------
+STEP 2: BACKEND SETUP (PYTHON & AI)
+------------------------------------------------------
+1. Open a Command Prompt (cmd) or PowerShell in the main project folder.
+2. Create a virtual environment to keep dependencies clean:
+   python -m venv venv
+3. Activate the virtual environment:
+   .\venv\Scripts\activate
+4. Install the required AI and backend libraries:
+   pip install fastapi uvicorn psycopg2 ultralytics opencv-python paddlepaddle paddleocr python-multipart pydantic
+5. Ensure the required data directories exist:
+   mkdir data\uploads
+   mkdir data\bestplates
+
+------------------------------------------------------
+STEP 3: FRONTEND SETUP (REACT & TAILWIND)
+------------------------------------------------------
+1. Open a second Command Prompt (cmd) or PowerShell.
+2. Navigate into the frontend directory:
+   cd frontend
+3. Install all Node.js dependencies:
+   npm install
+4. Compile the highly-optimized production build (FastAPI serves this build):
+   npm run build
+
+------------------------------------------------------
+STEP 4: RUNNING THE APPLICATION
+------------------------------------------------------
+1. Ensure your Python virtual environment is activated.
+2. Start the FastAPI/Uvicorn server:
+   uvicorn main:app --host localhost --port 8001
+3. Open your web browser (Chrome recommended) and go to:
+   http://localhost:8001
+4. Login using your NEXTRA credentials (e.g., username: pavin, password: pavin123).
+
+------------------------------------------------------
+TROUBLESHOOTING NOTES
+------------------------------------------------------
+- Missing File Errors: Ensure you copied the entire project directory, including the `anpr_project` folder which contains the local PaddleOCR logic.
+- Port in Use: If port 8001 is taken by another app, change `--port 8001` in the start command and update the API base URLs in the React frontend if applicable.
+- AI Slowdowns: If the new laptop does not have a dedicated GPU, the system is already configured to run purely on CPU using aggressive dynamic resizing (imgsz=160). No code changes are required for CPU compatibility!
