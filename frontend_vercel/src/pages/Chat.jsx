@@ -112,19 +112,13 @@ function ChatApp() {
         setIsTyping(true);
 
         try {
-            // bypass fetch {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ message: userMsg })
-            });
             await new Promise(r => setTimeout(r, 600));
-            const data = { reply: 'This is only the frontend dashboard hosted on Vercel. To run live AI queries, you need to connect to the active backend database and GPU server!' };
+            const reply = "This is only the frontend dashboard hosted on Vercel. To run live AI queries, you need to connect to the active backend database and GPU server!";
             
             setIsTyping(false);
-            setMessages([...newMessages, { role: 'bot', text: data.reply }]);
+            setMessages([...newMessages, { role: 'bot', text: reply }]);
         } catch (e) {
             setIsTyping(false);
-            setMessages([...newMessages, { role: 'bot', text: "Error connecting to Intelligence Search Service." }]);
         }
     };
     
@@ -137,7 +131,7 @@ function ChatApp() {
         localStorage.setItem('nextra_chat_history', JSON.stringify(initial));
     }
 
-    const formatMessage = (text) => { return text; };
+    const formatMessage = (text) => { return [<p key={1} className="mb-3 text-sm leading-relaxed text-gray-800">{text}</p>]; };
 
     return (
         <div className="relative w-full h-[100dvh] sm:h-full overflow-hidden bg-gradient-to-br from-gray-50 to-gray-200 font-sans text-gray-900 flex flex-col pt-10 px-6 pb-6">
